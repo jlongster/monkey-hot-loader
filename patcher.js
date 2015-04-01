@@ -3,7 +3,7 @@ if(module.hot) {
     console.log('[HMR] Error accepting: ' + err);
   });
 
-  var parseFunction = function(func) {
+  var getEvalSource = function(func) {
     var code = func.toString();
     var m = code.match(/^function\s+__eval\s*\((.*)\)\s*\{([\s\S]*)\}$/i);
     if(!m) {
@@ -125,7 +125,7 @@ if(module.hot) {
 
     if(typeof __eval === 'function') {
       try {
-        module.hot.data.moduleEvalWithScope(parseFunction(__eval));
+        module.hot.data.moduleEvalWithScope(getEvalSource(__eval));
       }
       catch(e) {
         console.log('error evaling: ' + e);
