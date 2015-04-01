@@ -1,0 +1,7 @@
+{
+  "name": "monkey-hot-loader",
+  "dependencies": {
+    "acorn": "^0.12.0",
+    "source-map": "^0.4.2"
+  }
+}
