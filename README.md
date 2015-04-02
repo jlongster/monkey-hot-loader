@@ -50,13 +50,13 @@ cover the majority of JavaScript code.
 
 See [the gulpfile](https://github.com/jlongster/backend-with-webpack/blob/master/gulpfile.js) in `backend-with-webpack` to see a full setup. This is a bit confusing right now. If you check out [backend-with-webpack](https://github.com/jlongster/backend-with-webpack), run `npm install` and `gulp run` you should have a full setup running.
 
-1. Install the loader
+1- Install the loader
 
 ```
 npm install monkey-hot-loader
 ```
 
-2. Add the loader to your webpack config, for example:
+2- Add the loader to your webpack config, for example:
 
 ```js
   module: {
@@ -66,11 +66,13 @@ npm install monkey-hot-loader
   }
 ```
 
-3. For the frontend, follow the instructions in [react-hot-loader](http://gaearon.github.io/react-hot-loader/getstarted/) to get `webpack-dev-server` set up.
+3a- For the frontend, you need to run the [Webpack Dev Server](http://webpack.github.io/docs/webpack-dev-server.html) to serve your assets. It will create a socketio server that your frontend uses to receive notifications. You can see an example of using the API in react-hot-loader's [same code](https://github.com/gaearon/react-hot-boilerplate/blob/master/server.js) to fire up the server. Make sure to load your assets from this server (i.e. `http://localhost:3000/js/bundle.js`).
 
-In your webpack config, add 2 more files to load, which connect and listen to the dev server. Additionally, add the `HotModuleReplacementPlugin` to plugins.
+3b- In your webpack config, add 2 more files to load, which connect and listen to the dev server. Additionally, add the `HotModuleReplacementPlugin` to plugins.
 
-```
+Make sure that the adress & port of the webpack-dev-serve query points to the dev server instance.
+
+```js
 var frontendConfig = config({
   entry: [
     'webpack-dev-server/client?http://localhost:3000',
@@ -86,9 +88,9 @@ var frontendConfig = config({
 });
 ```
 
-4. For the backend, do the same as the frontend except add only `webpack/hot/signal.js` file to your entry point. Also make sure to give a patch to `recordsPath`.
+4a- For the backend, do the same as the frontend except add only `webpack/hot/signal.js` file to your entry point. Also make sure to give a path to `recordsPath`.
 
-```
+```js
 var backendConfig = config({
   entry: [
     'webpack/hot/signal.js',
@@ -105,9 +107,11 @@ var backendConfig = config({
 });
 ```
 
-Now, use nodemon to run your app:
+The `signal.js` file instruments your app to check for updates when it receives a SIGURS2 signal. This is the same signal that nodemon uses to signal a restart, but `signal.js` overrides this behavior. Instead of restarting, your app will simply patch itself.
 
-```
+4b- For now, this setup requires nodemon, but in the future there could be multiple ways to talk to your running app. If you are using gulp, start your app with nodemon like this:
+
+```js
 nodemon({
   execMap: {
     js: 'node'
@@ -119,16 +123,16 @@ nodemon({
 });
 ```
 
-We tell `nodemon` to watch no files. We only use it to send the SIGUSR2 signal to the app. This part could be greatly improved.
+We tell `nodemon` to watch no files, since we don't care about that.
 
-Now, when webpack is done running, call `nodemon.restart()`:
+4c- Now, when webpack is done running, call `nodemon.restart()`. You will need to call webpack via that API. You should probably be doing all of this through gulp anyway.
 
-```
+```js
 webpack(backendConfig).watch(100, function(err, stats) {
   nodemon.restart();
 });
 ```
 
-I bet this is wildly confusing, and this really coule be improved. nodemon issues a restart by sending a SIGUSR2 on the process, but the `webpack/hot/signal.js` file installs code which captures this signal and checks for updated modules. So the restart really is just an update.
+I know it's confusing, but remember, this restart just sends the signal which our app captures and actually just does an update.
 
 I recommend just checking out [backend-with-webpack](https://github.com/jlongster/backend-with-webpack), installing with `npm install` and running with `gulp run` and playing with it there.
