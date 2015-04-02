@@ -48,7 +48,6 @@ if(module.hot) {
   if(!module.hot.data) {
     // First time loading. Try and patch something.
     var patchedBindings = {};
-    var originalBindings = {};
     var evalScope = {};
 
     var moduleEvalWithScope = function(frame) {
@@ -74,9 +73,6 @@ if(module.hot) {
       var f = eval(binding);
 
       if(typeof f === 'function' && binding !== '__eval') {
-        var proto = f.prototype;
-        originalBindings[binding] = f;
-
         var patched = function() {
           if(patchedBindings[binding]) {
             return patchedBindings[binding].apply(this, arguments);
@@ -85,11 +81,9 @@ if(module.hot) {
             return f.apply(this, arguments);
           }
         };
+        patched.prototype = f.prototype;
 
-        eval(
-          binding + ' = patched;\n' +
-          binding + '.prototype = proto;'
-        );
+        eval(binding + ' = patched;\n');
 
         if(module.exports[binding]) {
           module.exports[binding] = patched;
@@ -98,18 +92,15 @@ if(module.hot) {
     });
 
     module.hot.dispose(function(data) {
-      data.originalBindings = originalBindings;
       data.patchedBindings = patchedBindings;
       data.moduleEval = moduleEval;
       data.moduleEvalWithScope = moduleEvalWithScope;
     });
   }
   else {
-    var originalBindings = module.hot.data.originalBindings;
     var patchedBindings = module.hot.data.patchedBindings;
 
     bindings.forEach(function(binding) {
-      var lastFunction = patchedBindings[binding] || originalBindings[binding];
       var f = eval(binding);
 
       if(typeof f === 'function' && binding !== '__eval') {
@@ -133,7 +124,6 @@ if(module.hot) {
     }
 
     module.hot.dispose(function(data) {
-      data.originalBindings = originalBindings;
       data.patchedBindings = patchedBindings;
       data.moduleEval = module.hot.data.moduleEval;
       data.moduleEvalWithScope = module.hot.data.moduleEvalWithScope;
