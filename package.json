@@ -1,5 +1,12 @@
 {
   "name": "monkey-hot-loader",
+  "description": "A webpack loader which adds live updating functionality",
+  "version": "0.0.1",
+  "author": "James Long <longster@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jlongster/monkey-hot-loader.git"
+  },
   "dependencies": {
     "acorn": "^0.12.0",
     "source-map": "^0.4.2"
