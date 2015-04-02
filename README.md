@@ -3,7 +3,7 @@
 
 A [webpack](http://webpack.github.io/docs/) loader which adds live
 updating functionality to a JavaScript system. View
-[this post](http://jlongster.com/Backend-Apps-with-Webpack,-Part-III)
+[this post](http://jlongster.com/Backend-Apps-with-Webpack--Part-III)
 for gory technical details.
 
 ## Summary
@@ -16,7 +16,7 @@ monkey-patches the live running system automatically, so all you have
 to do is **edit a file and save it**.
 
 As described in
-[my post](http://jlongster.com/Backend-Apps-with-Webpack,-Part-III),
+[my post](http://jlongster.com/Backend-Apps-with-Webpack--Part-III),
 currently this only supports updating top-level functions in a module.
 That means given this code:
 
