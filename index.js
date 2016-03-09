@@ -1,11 +1,11 @@
 'use strict';
 var fs = require('fs');
 var path = require('path');
+var loaderUtils = require('loader-utils');
 var SourceNode = require('source-map').SourceNode;
 var SourceMapConsumer = require('source-map').SourceMapConsumer;
 var acorn = require('acorn');
 var makeIdentitySourceMap = require('./makeIdentitySourceMap');
-
 var patcherCode = fs.readFileSync(path.join(__dirname, 'patcher.js'), 'utf8');
 
 module.exports = function(source, map) {
@@ -13,8 +13,16 @@ module.exports = function(source, map) {
     this.cacheable()
   }
 
-  var ast = acorn.parse(source);
+  var query = loaderUtils.parseQuery(this.query)
+
+  var ast = acorn.parse(source, query);
   var names = ast.body
+      .map(function(node) {
+        if (node.type === 'ExportNamedDeclaration') {
+          return node.declaration;
+        }
+        return node;
+      })
       .filter(function(node) { return node.type === 'FunctionDeclaration'; })
       .map(function(node) { return node.id.name; });
 
