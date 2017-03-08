@@ -3,6 +3,21 @@ if(module.hot) {
     console.log('[HMR] Error accepting: ' + err);
   });
 
+  var injectScope = function(scope, code) {
+    // Take an explicit scope object and inject it so that
+    // `code` runs in context of it
+    var injected = Object.keys(scope).map(function(binding) {
+      return 'var ' + binding + ' = evalScope.' + binding + ';'
+    }).join(' ');
+
+    // Update our scope object with any modifications
+    var extracted = Object.keys(scope).map(function(binding) {
+      return 'evalScope.' + binding + ' = ' + binding + ';';
+    }).join(' ');
+
+    return injected + code + extracted;
+  }
+
   var getEvalSource = function(func) {
     var code = func.toString();
     var m = code.match(/^function\s+__eval\s*\((.*)\)\s*\{([\s\S]*)\}$/i);
@@ -28,21 +43,6 @@ if(module.hot) {
     return { body: body, scope: scope };
   }
 
-  var injectScope = function(scope, code) {
-    // Take an explicit scope object and inject it so that
-    // `code` runs in context of it
-    var injected = Object.keys(scope).map(function(binding) {
-      return 'var ' + binding + ' = evalScope.' + binding + ';'
-    }).join(' ');
-
-    // Update our scope object with any modifications
-    var extracted = Object.keys(scope).map(function(binding) {
-      return 'evalScope.' + binding + ' = ' + binding + ';';
-    }).join(' ');
-
-    return injected + code + extracted;
-  }
-
   var bindings = __moduleBindings;
 
   if(!module.hot.data) {
@@ -50,25 +50,9 @@ if(module.hot) {
     var patchedBindings = {};
     var evalScope = {};
 
-    var moduleEvalWithScope = function(frame) {
-      // Update the scope to reflect only the values specified as
-      // arguments to the __eval function. Copy over values from the
-      // existing scope and ignore the rest.
-      Object.keys(evalScope).forEach(function(arg) {
-        if(arg in frame.scope) {
-          frame.scope[arg] = evalScope[arg];
-        }
-      });
-      evalScope = frame.scope;
-
-      var code = injectScope(evalScope, frame.body);
-      return eval(code);
-    }
-
     var moduleEval = function(code) {
       return eval(code);
     }
-
     bindings.forEach(function(binding) {
       var f = eval(binding);
 
@@ -90,6 +74,21 @@ if(module.hot) {
         }
       }
     });
+
+    var moduleEvalWithScope = function(frame) {
+      // Update the scope to reflect only the values specified as
+      // arguments to the __eval function. Copy over values from the
+      // existing scope and ignore the rest.
+      Object.keys(evalScope).forEach(function(arg) {
+        if(arg in frame.scope) {
+          frame.scope[arg] = evalScope[arg];
+        }
+      });
+      evalScope = frame.scope;
+
+      var code = injectScope(evalScope, frame.body);
+      return eval(code);
+    }
 
     module.hot.dispose(function(data) {
       data.patchedBindings = patchedBindings;
