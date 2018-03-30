@@ -8,7 +8,7 @@ var acorn = require('acorn');
 var makeIdentitySourceMap = require('./makeIdentitySourceMap');
 var patcherCode = fs.readFileSync(path.join(__dirname, 'patcher.js'), 'utf8');
 
-module.exports = function(source, map) {
+module.exports = function(source, map, meta) {
   if(this.cacheable) {
     this.cacheable()
   }
@@ -16,8 +16,19 @@ module.exports = function(source, map) {
   var query = loaderUtils.parseQuery(this.query)
 
   var ast = acorn.parse(source, query);
+  var needsDefaultBinding = false;
   var names = ast.body
       .map(function(node) {
+        needsDefaultBinding = (
+          needsDefaultBinding ||
+          (
+            node.type === 'ExportDefaultDeclaration' &&
+            node.declaration.type !== 'FunctionDeclaration'
+          )
+        );
+        if (node.type === 'ExportDefaultDeclaration') {
+          return node.declaration;
+        }
         if (node.type === 'ExportNamedDeclaration') {
           return node.declaration;
         }
@@ -26,6 +37,11 @@ module.exports = function(source, map) {
       .filter(function(node) { return node.type === 'FunctionDeclaration'; })
       .map(function(node) { return node.id.name; });
 
+  if (needsDefaultBinding) {
+    names.push('__webpack_exports__["default"]')
+  }
+
+
   var appendText = [
     '/* HOT PATCH LOADER */',
     'var __moduleBindings = ' + JSON.stringify(names) + ';',
@@ -33,7 +49,7 @@ module.exports = function(source, map) {
   ].join(' ');
 
   if(this.sourceMap === false) {
-    return this.callback(null, [source, appendText]);
+    return this.callback(null, [source, appendText].join('\n\n'), map, meta);
   }
 
   if(!map) {

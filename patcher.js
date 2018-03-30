@@ -70,7 +70,14 @@ if(module.hot) {
         return eval(code);
       }
 
-      var exportNames = Object.keys(module.exports);
+      var exportNames = [];
+      if(module.exports) {
+        exportNames = Object.keys(module.exports);
+      }
+      var webpackExportNames = [];
+      if(typeof(__webpack_exports__) !== 'undefined' && __webpack_exports__['default']) {
+        webpackExportNames = ['default'];
+      }
 
       bindings.forEach(function(binding) {
         var f = eval(binding);
@@ -89,11 +96,21 @@ if(module.hot) {
           eval(binding + ' = patched;\n');
 
           exportNames.forEach(function(exportName) {
-            if (typeof module.exports[exportName] !== 'function') {
+            if(typeof module.exports[exportName] !== 'function') {
               return;
             }
-            if (module.exports[exportName].prototype === f.prototype) {
+            if(module.exports[exportName].prototype === f.prototype) {
               module.exports[exportName] = patched;
+            }
+          });
+          webpackExportNames.forEach(function(exportName) {
+            if(typeof __webpack_exports__[exportName] !== 'function') {
+              return;
+            }
+            if(__webpack_exports__[exportName].prototype === f.prototype) {
+              __webpack_require__.d(__webpack_exports__, exportName, function() {
+                return patched;
+              });
             }
           });
         }
