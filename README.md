@@ -26,7 +26,7 @@ function foo() {
 }
 
 function bar() {
-  return function() { 
+  return function() {
     // ...
   }
 }
@@ -65,6 +65,16 @@ npm install monkey-hot-loader
     ]
   }
 ```
+
+If you are using Webpack 2's native support of `import`, you must add `?sourceType=module` to the loader query string. Otherwise, you will encounter an error: `Module build failed: SyntaxError: 'import' and 'export' may appear only with 'sourceType: module'`. Any query string parameters are passed to the options for the [acorn parser](https://github.com/ternjs/acorn) used by this loader to find top level functions.
+```js
+  module: {
+    loaders: [
+      {test: /\.js$/, exclude: /node_modules/, loaders: ['monkey-hot?sourceType=module', 'babel'] },
+    ]
+  }
+```
+
 
 3a- For the frontend, you need to run the [Webpack Dev Server](http://webpack.github.io/docs/webpack-dev-server.html) to serve your assets. It will create a socketio server that your frontend uses to receive notifications. You can see an example of using the API in react-hot-loader's [same code](https://github.com/gaearon/react-hot-boilerplate/blob/master/server.js) to fire up the server. Make sure to load your assets from this server (i.e. `http://localhost:3000/js/bundle.js`).
 
